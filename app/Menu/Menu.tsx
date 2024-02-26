@@ -2,6 +2,7 @@ import React, {
   ButtonHTMLAttributes,
   Key,
   ReactElement,
+  RefObject,
   useLayoutEffect,
   useRef,
 } from 'react';
@@ -20,6 +21,7 @@ import {
   FocusStrategy,
   DOMRefValue,
   Node,
+  FocusableElement,
 } from '@react-types/shared';
 import { TreeState } from '@react-stately/tree';
 import styles from './Menu.module.css';
@@ -28,7 +30,7 @@ import { useHover } from '@react-aria/interactions';
 
 export type SapphireMenuProps<T extends object> = AriaMenuProps<T> &
   MenuTriggerProps & {
-    renderTrigger: (
+    renderTrigger?: (
       props: ButtonHTMLAttributes<Element>,
       isOpen: boolean
     ) => React.ReactNode;
@@ -40,6 +42,7 @@ interface MenuItemProps<T> {
   onAction?: (key: Key) => void;
   onClose: () => void;
   disabledKeys?: Iterable<Key>;
+  parentProps: MenuItemProps<T>;
 }
 
 export function MenuItem<T>({
@@ -48,9 +51,23 @@ export function MenuItem<T>({
   onAction,
   disabledKeys,
   onClose,
+  parentProps,
 }: MenuItemProps<T>): JSX.Element {
-  const ref = React.useRef<HTMLLIElement>(null);
   const isDisabled = disabledKeys && [...disabledKeys].includes(item.key);
+
+  const popoverRef = useRef<DOMRefValue<HTMLDivElement>>(null);
+  const unwrappedPopoverRef = useUnwrapDOMRef(popoverRef);
+  const ref = useFocusableRef<HTMLLIElement>(null);
+
+  const { overlayProps, updatePosition } = useOverlayPosition({
+    targetRef: ref,
+    overlayRef: unwrappedPopoverRef,
+    isOpen: true,
+    placement: 'right',
+    offset: 6,
+    onClose: onClose,
+    shouldFlip: true,
+  });
 
   const { menuItemProps } = useMenuItem(
     {
@@ -82,6 +99,20 @@ export function MenuItem<T>({
       )}
     >
       <p className={styles['sapphire-menu-item-overflow']}>{item.rendered}</p>
+      {item.hasChildNodes && state.expandedKeys.has(item.key) && (
+        <Popover
+          isOpen={true}
+          ref={popoverRef}
+          style={overlayProps.style}
+          className={clsx(styles['sapphire-menu-container'])}
+          shouldCloseOnBlur
+          onClose={onClose}
+        >
+          <MenuPopup autoFocus='first' onClose={onClose} isOpen>
+            {...item.props.children}
+          </MenuPopup>
+        </Popover>
+      )}
     </li>
   );
 }
@@ -92,13 +123,15 @@ const MenuPopup = <T extends object>(
     onClose: () => void;
   } & SapphireMenuProps<T>
 ) => {
-  const state = useTreeState({ ...props, selectionMode: 'none' });
+  const menuItemState = useTreeState({ ...props, selectionMode: 'none' });
   const menuRef = useRef<HTMLUListElement>(null);
-  const { menuProps } = useMenu(props, state, menuRef);
+  const { menuProps } = useMenu(props, menuItemState, menuRef);
+
+  console.log(props.children);
 
   return (
     <ul {...menuProps} ref={menuRef} className={styles['sapphire-menu']}>
-      {[...state.collection].map((item) => {
+      {[...menuItemState.collection].map((item) => {
         if (item.type === 'section') {
           throw new Error('Sections not supported');
         }
@@ -106,9 +139,13 @@ const MenuPopup = <T extends object>(
           <MenuItem
             key={item.key}
             item={item}
-            state={state}
-            onClose={props.onClose}
-            onAction={props.onAction}
+            state={menuItemState}
+            onClose={item.hasChildNodes ? () => true : props.onClose}
+            onAction={
+              item.hasChildNodes
+                ? () => menuItemState.toggleKey(item.key)
+                : props.onAction
+            }
             disabledKeys={props.disabledKeys}
           />
         );
