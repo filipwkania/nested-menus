@@ -25,6 +25,7 @@ import { TreeState } from '@react-stately/tree';
 import styles from './Menu.module.css';
 import clsx from 'clsx';
 import { useHover } from '@react-aria/interactions';
+import { useFocusManager } from 'react-aria';
 
 export type SapphireMenuProps<T extends object> = AriaMenuProps<T> &
   MenuTriggerProps & {
@@ -81,7 +82,20 @@ export function MenuItem<T>({
   const { hoverProps, isHovered } = useHover({ isDisabled });
   const { focusProps, isFocusVisible } = useFocusRing();
 
-  // const focusManager = useFocusManager();
+  const focusManager = useFocusManager();
+
+  React.useEffect(() => {
+    // display submenu on hover
+    if (item.hasChildNodes && isHovered && !state.expandedKeys.has(item.key)) {
+      state.toggleKey(item.key);
+    } else if (
+      !item.hasChildNodes &&
+      isHovered &&
+      state.expandedKeys.size > 0
+    ) {
+      state.setExpandedKeys(new Set());
+    }
+  }, [item.key, state, item.hasChildNodes, isHovered]);
 
   React.useEffect(() => {
     if (item.hasChildNodes) {
@@ -96,13 +110,10 @@ export function MenuItem<T>({
         }
         // should also depend on submenu level if we decide to go deeper
         if (event.key === 'ArrowLeft' && state.expandedKeys.has(item.key)) {
+          focusManager?.focusFirst({
+            from: ref.current,
+          });
           state.toggleKey(item.key);
-          // returning focus back to parent is wonky, explore focus manager more
-          // focusManager?.focusPrevious({
-          //   tabbable: true,
-          //   wrap: true,
-          //   from: ref.current,
-          // });
         }
       };
       window.addEventListener('keydown', handleKeyDown);
@@ -110,7 +121,7 @@ export function MenuItem<T>({
         window.removeEventListener('keydown', handleKeyDown);
       };
     }
-  }, [item.key, state, item.hasChildNodes, isFocusVisible]);
+  }, [item.key, state, item.hasChildNodes, isFocusVisible, focusManager]);
 
   return (
     <>
@@ -140,7 +151,6 @@ export function MenuItem<T>({
             isOpen: state.expandedKeys.has(item.key),
             ref: popoverRef,
             style: overlayProps.style,
-            onClose,
           }}
         >
           {...item.props.children}
@@ -197,6 +207,7 @@ function _Menu<T extends object>(
     triggerRef
   );
   const { buttonProps } = useButton(menuTriggerProps, triggerRef);
+  const isMainMenu = !!renderTrigger;
 
   const { overlayProps, updatePosition } = useOverlayPosition({
     targetRef: triggerRef,
@@ -218,7 +229,7 @@ function _Menu<T extends object>(
 
   return (
     <>
-      {renderTrigger &&
+      {isMainMenu &&
         renderTrigger({ ref: triggerRef, ...buttonProps }, state.isOpen)}
       <Popover
         isOpen={state.isOpen}

@@ -1,23 +1,9 @@
 'use client';
 
-import Image from 'next/image';
-
-import { Menu, Item, Section } from './Menu';
-import { StrictMode, useState } from 'react';
-import { Picker } from '@adobe/react-spectrum';
+import { Menu, Item } from './Menu';
+import { StrictMode } from 'react';
 
 export default function Home() {
-  let [sections, setSections] = useState([
-    {
-      name: 'People',
-      items: [{ name: 'David' }, { name: 'Same' }, { name: 'Jane' }],
-    },
-    {
-      name: 'Animals',
-      items: [{ name: 'Aardvark' }, { name: 'Kangaroo' }, { name: 'Snake' }],
-    },
-  ]);
-
   return (
     <StrictMode>
       <Menu
