@@ -28,10 +28,7 @@ export default function Home() {
         <Item key='rename'>Rename application</Item>
         <Item key='move' title='Move to'>
           <Item key='move-to-shared'>Shared</Item>
-          <Item key='move-to-desktop' title='Desktop'>
-            <Item key='move-to-desktop-1'>Desktop 1</Item>
-            <Item key='move-to-desktop-2'>Desktop 2</Item>
-          </Item>
+          <Item key='move-to-desktop'>Desktop</Item>
           <Item key='move-to-favorite'>Favorite</Item>
         </Item>
         <Item key='delete'>Delete application</Item>

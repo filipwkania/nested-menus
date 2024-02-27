@@ -2,7 +2,6 @@ import React, {
   ButtonHTMLAttributes,
   Key,
   ReactElement,
-  RefObject,
   useLayoutEffect,
   useRef,
 } from 'react';
@@ -21,14 +20,11 @@ import {
   FocusStrategy,
   DOMRefValue,
   Node,
-  FocusableElement,
 } from '@react-types/shared';
 import { TreeState } from '@react-stately/tree';
 import styles from './Menu.module.css';
 import clsx from 'clsx';
 import { useHover } from '@react-aria/interactions';
-import { Item } from '.';
-import { useFocusManager } from 'react-aria';
 
 export type SapphireMenuProps<T extends object> = AriaMenuProps<T> &
   MenuTriggerProps & {
@@ -85,6 +81,8 @@ export function MenuItem<T>({
   const { hoverProps, isHovered } = useHover({ isDisabled });
   const { focusProps, isFocusVisible } = useFocusRing();
 
+  // const focusManager = useFocusManager();
+
   React.useEffect(() => {
     if (item.hasChildNodes) {
       // subscibe to right and left arrow key press
@@ -96,10 +94,15 @@ export function MenuItem<T>({
         ) {
           state.toggleKey(item.key);
         }
-        // should depend on submenu level if we decide to go deeper
+        // should also depend on submenu level if we decide to go deeper
         if (event.key === 'ArrowLeft' && state.expandedKeys.has(item.key)) {
           state.toggleKey(item.key);
           // returning focus back to parent is wonky, explore focus manager more
+          // focusManager?.focusPrevious({
+          //   tabbable: true,
+          //   wrap: true,
+          //   from: ref.current,
+          // });
         }
       };
       window.addEventListener('keydown', handleKeyDown);
