@@ -11,7 +11,10 @@ import { mergeProps } from '@react-aria/utils';
 import { PopoverProps as AriaPopoverProps } from '@react-types/overlays';
 import { useModal, useOverlay, OverlayContainer } from '@react-aria/overlays';
 
-type PopoverProps = Omit<AriaPopoverProps, 'arrowProps' | 'hideArrow'> & {
+export type PopoverProps = Omit<
+  AriaPopoverProps,
+  'arrowProps' | 'hideArrow'
+> & {
   className?: string;
   style: CSSProperties;
 };
@@ -35,6 +38,7 @@ function Popover(props: PopoverProps, ref: DOMRef<HTMLDivElement>) {
     style,
   } = props;
   const domRef = useDOMRef(ref);
+
   if (!isOpen) {
     return null;
   }
