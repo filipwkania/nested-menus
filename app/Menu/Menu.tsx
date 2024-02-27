@@ -111,7 +111,7 @@ export function MenuItem<T>({
         // should also depend on submenu level if we decide to go deeper
         if (event.key === 'ArrowLeft' && state.expandedKeys.has(item.key)) {
           focusManager?.focusFirst({
-            from: ref.current,
+            from: ref.current || undefined,
           });
           state.toggleKey(item.key);
         }
@@ -121,7 +121,7 @@ export function MenuItem<T>({
         window.removeEventListener('keydown', handleKeyDown);
       };
     }
-  }, [item.key, state, item.hasChildNodes, isFocusVisible, focusManager]);
+  }, [item.key, state, item.hasChildNodes, isFocusVisible, focusManager, ref]);
 
   return (
     <>
